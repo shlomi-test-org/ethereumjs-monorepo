@@ -1,2 +1,4 @@
 folders:
   - path: /avi/sade
+    exclude:
+      - ./tost/*
