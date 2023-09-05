@@ -7,6 +7,11 @@ ENV VERSION=$VERSION
 RUN npm install @ethereumjs/client@$VERSION
 
 FROM node:16-alpine
+
+RUN addgroup --system <group>
+RUN adduser --system <user> --ingroup <group>
+USER <user>:<group>
+
 WORKDIR /usr/app
 COPY --from=build /usr/app .
 
