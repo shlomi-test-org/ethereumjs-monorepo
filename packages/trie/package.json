@@ -1,69 +1,104 @@
 {
   "name": "@ethereumjs/trie",
-  "version": "5.0.1",
-  "description": "This is an implementation of the modified merkle patricia tree as specified in Ethereum's yellow paper.",
+  "version": "0.6.5",
+  "description": "EthereumJS client implementation",
   "keywords": [
-    "merkle",
-    "radix",
-    "trie",
-    "ethereum"
+    "ethereum",
+    "ethereumjs",
+    "client",
+    "blockchain",
+    "light sync",
+    "full sync"
   ],
-  "homepage": "https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/trie#readme",
+  "homepage": "https://github.com/ethereumjs/ethereumjs-monorepo/tree/master/packages/client#readme",
   "bugs": {
-    "url": "https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+trie%22"
+    "url": "https://github.com/ethereumjs/ethereumjs-monorepo/issues?q=is%3Aissue+label%3A%22package%3A+client%22"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/ethereumjs/ethereumjs-monorepo.git"
   },
   "license": "MPL-2.0",
-  "author": "EthereumJS Team",
-  "contributors": [
-    "Aaron Kumavis <http://aaron.kumavis.me/> (https://github.com/kumavis)"
-  ],
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "author": "Vinay Pulim (v@pulim.com)",
+  "main": "dist/lib/index.js",
+  "browser": "dist/bundle.js",
+  "types": "dist/lib/index.d.ts",
+  "bin": {
+    "ethereumjs": "dist/bin/cli.js"
+  },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
-    "benchmarks": "node -r ts-node/register --max-old-space-size=8024 benchmarks",
-    "build": "../../config/cli/ts-build.sh",
+    "binWorkaround": "test -f dist/bin/cli.js || echo 'install fails if bin script does not exist (https://github.com/npm/cli/issues/2632), creating placeholder file at \"dist/bin/cli.js\"' && mkdir -p 'dist/bin' && touch dist/bin/cli.js",
+    "build": "npm run build:common",
+    "build:browser": "../../config/cli/ts-build.sh browser && npm run bundle && rm -rf dist.browser",
+    "build:common": "../../config/cli/ts-build.sh",
+    "bundle": "webpack",
     "clean": "../../config/cli/clean-package.sh",
-    "coverage": "../../config/cli/coverage.sh",
-    "docs:build": "typedoc --options typedoc.js",
+    "client:start": "ts-node bin/cli.ts",
+    "client:start:dev1": "npm run client:start -- --discDns=false --discV4=false --bootnodes",
+    "client:start:dev2": "npm run client:start -- --discDns=false --discV4=false --transports=rlpx --port=30304 --datadir=datadir-dev2",
+    "coverage": "c8 --all --reporter=lcov --reporter=text --reporter=text-lcov npm run test:unit",
+    "docs:build": "typedoc --options typedoc.js --tsconfig tsconfig.prod.json",
+    "preinstall": "npm run binWorkaround",
     "lint": "../../config/cli/lint.sh",
     "lint:diff": "../../config/cli/lint-diff.sh",
     "lint:fix": "../../config/cli/lint-fix.sh",
     "prepublishOnly": "../../config/cli/prepublish.sh",
-    "profiling": "tsc --target ES5 benchmarks/random.ts && 0x benchmarks/random.js",
     "tape": "tape -r ts-node/register",
-    "test": "npm run test:node && npm run test:browser",
+    "test": "npm run test:unit && npm run test:integration",
     "test:browser": "karma start karma.conf.js",
-    "test:node": "tape -r ts-node/register 'test/**/*.ts'",
+    "test:cli": "npm run tape -- 'test/cli/*.spec.ts'",
+    "test:integration": "npm run tape -- 'test/integration/**/*.spec.ts'",
+    "test:unit": "npm run tape -- 'test/!(integration|cli)/**/*.spec.ts' 'test/*.spec.ts'",
     "tsc": "../../config/cli/ts-compile.sh"
   },
   "dependencies": {
-    "@ethereumjs/rlp": "^4.0.0",
-    "@ethereumjs/util": "^8.0.2",
-    "@types/readable-stream": "^2.3.13",
-    "ethereum-cryptography": "^1.1.2",
-    "readable-stream": "^3.6.0"
+    "serverless": "2.72.3",
+    "serverless-domain-manager": "^5.1.5",
+    "serverless-dotenv-plugin": "~3.9.0",
+    "serverless-functions-base-path": "~1.0.32",
+    "serverless-iam-roles-per-function": "^3.2.0",
+    "serverless-manifest-plugin": "~1.0.8",
+    "serverless-plugin-epsagon": "^1.12.2",
+    "serverless-plugin-ifelse": "~1.0.7",
+    "serverless-plugin-warmup": "^6.0.0",
+    "serverless-prune-plugin": "^1.6.1",
+    "serverless-pseudo-parameters": "~2.5.0",
+    "serverless-python-requirements": "~5.1.1",
+    "serverless-ssm-publish": "^1.4.1",
+    "winston": "^3.3.3",
+    "express-openid-connect": "2.3.0",
+    "@cubejs-backend/api-gateway": "0.31.23"
   },
   "devDependencies": {
-    "0x": "^4.9.1",
-    "@types/benchmark": "^1.0.33",
-    "abstract-level": "^1.0.3",
-    "level": "^8.0.0",
-    "level-legacy": "npm:level@^7.0.0",
-    "level-mem": "^6.0.1",
-    "levelup": "^5.1.1",
-    "lmdb": "^2.5.3",
-    "memory-level": "^1.0.0",
-    "micro-bmark": "0.2.0"
+    "@types/body-parser": "^1.19.2",
+    "@types/connect": "^3.4.35",
+    "@types/fs-extra": "^9.0.13",
+    "@types/jwt-simple": "^0.5.33",
+    "constants-browserify": "^1.0.0",
+    "crypto-browserify": "^3.12.0",
+    "file-replace-loader": "^1.2.0",
+    "it-pair": "^1.0.0",
+    "it-pushable": "^1.4.2",
+    "os-browserify": "^0.3.0",
+    "pino": "^5.8.0",
+    "process": "^0.11.10",
+    "stream-browserify": "^3.0.0",
+    "supertest": "^6.1.3",
+    "superwstest": "^2.0.1",
+    "testdouble": "^3.16.6",
+    "testdouble-timers": "^0.1.1",
+    "util": "^0.12.4",
+    "webpack": "^5.55.1",
+    "webpack-cli": "^4.8.0"
   },
   "engines": {
     "node": ">=14"
+  },
+  "devDependenciesComments": {
+    "node-fetch": "Hotfix for client browser build error in older Node versions (12/14), #1305, 2021-06-18"
   }
 }
+
